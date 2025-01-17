@@ -27,6 +27,8 @@ class Doodler {
     this.velocity = 0;
     this.jumpForce = -15;
     this.speed = 10;
+
+    this.startY = canvas.height / 2;
   }
 
   jump() {
@@ -63,7 +65,17 @@ class Doodler {
     }
 
     this.velocity += GRAVITY;
-    this.y += this.velocity;
+
+    if (this.y < this.startY) {
+      const diff = this.startY - this.y;
+      this.y = this.startY;
+      platforms.forEach((platform) => {
+        platform.y += diff;
+      });
+    } else {
+      this.y += this.velocity;
+    }
+
     this.checkPlatformCollision();
 
     // screen wrapping
@@ -143,6 +155,7 @@ generatePlatforms();
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updatePlatforms();
   platforms.forEach((platform) => platform.draw());
   doodler.update();
   doodler.draw();
