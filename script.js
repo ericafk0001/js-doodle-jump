@@ -12,10 +12,13 @@ const PLATFORM_WIDTH = 125;
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_GAP = 195;
 const PLATFORM_COUNT = 12;
-let platforms = [];
 const GRAVITY = 0.5; // Made constant since it shouldn't change
 const INITIAL_JUMP_FORCE = -15; // Reduced jump force
 const MOVEMENT_SPEED = 8; // Reduced horizontal speed
+
+let score = 0;
+
+let platforms = [];
 
 const keys = {
   left: false,
@@ -97,6 +100,8 @@ class Doodler {
       platforms.forEach((platform) => {
         platform.y += diff;
       });
+
+      updateScore();
     }
 
     this.checkPlatformCollision();
@@ -225,6 +230,14 @@ function resetGame() {
 
   generatePlatforms();
   gameLoop();
+}
+
+function updateScore() {
+  score += 2;
+
+  ctx.fillStyle = "red";
+  ctx.font = "50px Arial";
+  ctx.fillText(score, canvas.width / 2, 69);
 }
 
 function gameLoop() {
