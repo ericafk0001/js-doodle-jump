@@ -2,10 +2,17 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 // Set canvas size
-canvas.width = window.innerWidth;
+canvas.width = 680;
 canvas.height = window.innerHeight;
 
+const PLATFORM_WIDTH = 125;
+const PLATFORM_HEIGHT = 30;
+const PLATFORM_GAP = 100;
+const PLATFORM_COUNT = 12;
+let platforms = [];
+
 let GRAVITY = 0.5;
+
 const keys = {
   left: false,
   right: false,
@@ -19,7 +26,7 @@ class Doodler {
     this.width = 60;
     this.velocity = 0;
     this.jumpForce = -15;
-    this.speed = 5;
+    this.speed = 10;
   }
 
   jump() {
@@ -29,6 +36,22 @@ class Doodler {
   draw() {
     ctx.fillStyle = "orange";
     ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  checkPlatformCollision() {
+    if (this.velocity > 0) {
+      // Only check when falling
+      platforms.forEach((platform) => {
+        if (
+          this.y + this.height >= platform.y &&
+          this.y + this.height <= platform.y + platform.height &&
+          this.x + this.width >= platform.x &&
+          this.x <= platform.x + platform.width
+        ) {
+          this.jump();
+        }
+      });
+    }
   }
 
   update() {
@@ -41,10 +64,46 @@ class Doodler {
 
     this.velocity += GRAVITY;
     this.y += this.velocity;
+    this.checkPlatformCollision();
 
     // screen wrapping
     if (this.x + this.width < 0) this.x = canvas.width;
     if (this.x > canvas.width) this.x = -this.width;
+  }
+}
+
+class Platform {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = PLATFORM_WIDTH;
+    this.height = PLATFORM_HEIGHT;
+  }
+
+  draw() {
+    ctx.fillStyle = "green";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+}
+
+function generatePlatforms() {
+  platforms = []; // Clear existing platforms
+  for (let i = 0; i < PLATFORM_COUNT; i++) {
+    const x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+    const y = canvas.height - i * PLATFORM_GAP;
+    platforms.push(new Platform(x, y));
+  }
+}
+
+function updatePlatforms() {
+  // Remove platforms that are below screen
+  platforms = platforms.filter((platform) => platform.y < canvas.height + 100);
+
+  // Generate new platforms at top
+  while (platforms.length < PLATFORM_COUNT) {
+    const x = Math.random() * (canvas.width - PLATFORM_WIDTH);
+    const y = platforms[platforms.length - 1].y - PLATFORM_GAP;
+    platforms.push(new Platform(x, y));
   }
 }
 
@@ -80,8 +139,11 @@ window.addEventListener("keyup", (e) => {
   }
 });
 
+generatePlatforms();
+
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  platforms.forEach((platform) => platform.draw());
   doodler.update();
   doodler.draw();
   requestAnimationFrame(gameLoop);
