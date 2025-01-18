@@ -237,6 +237,8 @@ window.addEventListener("keydown", (e) => {
       break;
     case "Enter":
       if (onMainMenu) {
+        startSound.pause();
+        startSound.currentTime = 0;
         startSound.play();
         onMainMenu = false;
         gameLoop();
