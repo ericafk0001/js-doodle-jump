@@ -5,11 +5,30 @@ const ctx = canvas.getContext("2d");
 canvas.width = 680;
 canvas.height = window.innerHeight;
 
+ctx.imageSmoothingEnabled = false;
+
 const backgroundImage = new Image();
 backgroundImage.src = "sky/1.png";
 
-const PLATFORM_WIDTH = 125;
-const PLATFORM_HEIGHT = 30;
+const clouds = [];
+const cloudPaths = [
+  "clouds/1.png",
+  "clouds/2.png",
+  "clouds/3.png",
+  "clouds/4.png",
+  "clouds/5.png",
+  "clouds/6.png",
+  "clouds/7.png",
+  "clouds/8.png",
+];
+
+cloudPaths.forEach((path, index) => {
+  clouds[index] = new Image();
+  clouds[index].src = path;
+});
+
+const PLATFORM_WIDTH = 140;
+const PLATFORM_HEIGHT = 76;
 const PLATFORM_GAP = 195;
 const PLATFORM_COUNT = 12;
 const GRAVITY = 0.5; // Made constant since it shouldn't change
@@ -117,11 +136,18 @@ class Platform {
     this.y = y;
     this.width = PLATFORM_WIDTH;
     this.height = PLATFORM_HEIGHT;
+
+    this.cloudIndex = Math.floor(Math.random() * clouds.length);
   }
 
   draw() {
-    ctx.fillStyle = "green";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    ctx.drawImage(
+      clouds[this.cloudIndex],
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
   }
 }
 
@@ -234,7 +260,7 @@ function resetGame() {
 }
 
 function updateScore() {
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "white";
   ctx.font = "50px Arial";
   ctx.fillText(score, canvas.width / 2, 69);
 }
@@ -271,18 +297,18 @@ function mainMenu() {
   ctx.fillStyle = "rgb(0, 85, 255)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
-  ctx.font = "50px Arial";
+  ctx.font = "60px Arial";
   ctx.textAlign = "center";
   ctx.fillText("Puffy Pixels", canvas.width / 2, canvas.height / 2);
   ctx.fillText(
     "Press ENTER to Start",
     canvas.width / 2,
-    canvas.height / 2 + 40
+    canvas.height / 2 + 60
   );
 }
 
 const music = document.getElementById("music");
-music.volume = 0.1;
+music.volume = 0.09;
 music.loop = true;
 music.play();
 
