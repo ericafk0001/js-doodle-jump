@@ -100,8 +100,7 @@ class Doodler {
       platforms.forEach((platform) => {
         platform.y += diff;
       });
-
-      updateScore();
+      score += 3;
     }
 
     this.checkPlatformCollision();
@@ -171,12 +170,14 @@ window.addEventListener("keydown", (e) => {
     case " ":
       if (isGameOver) {
         isGameOver = false;
+        isPlaying = true;
         resetGame();
       }
       break;
     case "Enter":
       if (onMainMenu) {
         onMainMenu = false;
+        isPlaying = true;
         gameLoop();
       }
   }
@@ -205,6 +206,7 @@ let isGameOver = false;
 function checkLosingCondition() {
   if (doodler.y > canvas.height - 69) {
     isGameOver = true;
+    isPlaying = false;
     cancelAnimationFrame(animationFrameId);
     console.log("Player Lost");
 
@@ -214,11 +216,13 @@ function checkLosingCondition() {
     ctx.font = "30px Arial";
     ctx.textAlign = "center";
     ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 + 30);
     ctx.fillText(
       "Press SPACE to restart",
       canvas.width / 2,
-      canvas.height / 2 + 40
+      canvas.height / 2 + 80
     );
+    score = 0;
   }
 }
 
@@ -233,15 +237,16 @@ function resetGame() {
 }
 
 function updateScore() {
-  score += 2;
-
   ctx.fillStyle = "red";
   ctx.font = "50px Arial";
   ctx.fillText(score, canvas.width / 2, 69);
 }
 
+const FPS = 90;
+let isPlaying = false;
+
 function gameLoop() {
-  if (!isGameOver) {
+  if (!isGameOver && !onMainMenu && isPlaying) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
@@ -251,7 +256,11 @@ function gameLoop() {
     doodler.update();
     doodler.draw();
 
-    animationFrameId = requestAnimationFrame(gameLoop);
+    updateScore();
+
+    setTimeout(() => {
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }, 1000 / FPS);
   }
 }
 
