@@ -223,7 +223,7 @@ class Bird {
     this.frameDelay = 12; // Slow down animation
 
     this.x = canvas.width;
-    this.y = Math.random() * (canvas.height / 2 - 300); // Random height
+    this.y = Math.random() * (canvas.height / 2 - 420); // Random height
     this.speed = 2.7;
   }
 
