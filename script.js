@@ -288,3 +288,5 @@ music.loop = true;
 music.play();
 
 mainMenu();
+
+console.log("hi");
