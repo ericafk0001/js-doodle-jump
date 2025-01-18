@@ -266,6 +266,7 @@ let isGameOver = false;
 
 function checkLosingCondition() {
   if (froggy.y > canvas.height - 69) {
+    gameOverSound.play();
     isGameOver = true;
     cancelAnimationFrame(animationFrameId);
     console.log("Player Lost");
