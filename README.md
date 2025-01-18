@@ -19,6 +19,10 @@ Puffy Pixels is a Doodle Jump-inspired platformer game featuring a jumping frog,
    - `Space`: Restart after game over.
 3. Jump on platforms to climb higher and score points. Avoid falling below the screen.
 
+## Screenshot
+
+![a ingame screenshot](https://cloud-9u4xmj5cr-hack-club-bot.vercel.app/0image.png)
+
 ## Setup and Installation
 
 1. Clone or download the repository.
