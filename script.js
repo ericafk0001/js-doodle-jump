@@ -15,6 +15,24 @@ const gameOverSound = document.getElementById("gameOverSound");
 const backgroundImage = new Image();
 backgroundImage.src = "sky/1.png";
 
+let backgroundY = 0;
+const PARALLAX_SPEED = 0.5;
+
+const backgroundLayers = [];
+const LAYER_COUNT = 2;
+const LAYER_SPEEDS = [0.2, 0.5, 0.8]; // Different speeds for each layer
+
+// Load background layers
+for (let i = 0; i < LAYER_COUNT; i++) {
+  const layer = new Image();
+  layer.src = `sky/${i + 1}.png`;
+  backgroundLayers.push({
+    image: layer,
+    y: 0,
+    speed: LAYER_SPEEDS[i],
+  });
+}
+
 const clouds = [];
 const cloudPaths = [
   "clouds/1.png",
@@ -22,9 +40,6 @@ const cloudPaths = [
   "clouds/3.png",
   "clouds/4.png",
   "clouds/5.png",
-  "clouds/6.png",
-  "clouds/7.png",
-  "clouds/8.png",
 ];
 
 cloudPaths.forEach((path, index) => {
@@ -38,13 +53,13 @@ froggyJump.src = "frog/jump.png";
 const froggyFall = new Image();
 froggyFall.src = "frog/fall.png";
 
-const PLATFORM_WIDTH = 140;
-const PLATFORM_HEIGHT = 76;
+const PLATFORM_WIDTH = 128;
+const PLATFORM_HEIGHT = 60;
 const PLATFORM_GAP = 195;
 const PLATFORM_COUNT = 12;
-const GRAVITY = 0.5; // Made constant since it shouldn't change
-const INITIAL_JUMP_FORCE = -15; // Reduced jump force
-const MOVEMENT_SPEED = 8; // Reduced horizontal speed
+const GRAVITY = 0.5;
+const INITIAL_JUMP_FORCE = -15;
+const MOVEMENT_SPEED = 8;
 
 let score = 0;
 
@@ -154,6 +169,16 @@ class Froggy {
       platforms.forEach((platform) => {
         platform.y += diff;
       });
+
+      backgroundLayers.forEach((layer) => {
+        layer.y += layer.speed * diff;
+      });
+
+      // Move birds down
+      birds.forEach((bird) => {
+        bird.y += diff;
+      });
+
       score += 3;
     }
 
@@ -176,12 +201,54 @@ class Platform {
   }
 
   draw() {
+    ctx.drawImage(clouds[this.cloudIndex], this.x, this.y - 15, 128, 76);
+  }
+}
+
+class Bird {
+  constructor() {
+    this.spriteSheet = new Image();
+    this.spriteSheet.onload = () => {
+      this.isLoaded = true;
+    };
+    this.spriteSheet.src = "bird.png";
+    this.isLoaded = false;
+
+    // Increase frame dimensions to match sprite sheet
+    this.frameWidth = 16; // Actual width of each frame
+    this.frameHeight = 16; // Actual height of each frame
+    this.totalFrames = 4; // Number of frames in sprite
+    this.currentFrame = 0;
+    this.frameCounter = 0;
+    this.frameDelay = 12; // Slow down animation
+
+    this.x = canvas.width;
+    this.y = Math.random() * (canvas.height / 2); // Random height
+    this.speed = 2.7;
+  }
+
+  update() {
+    this.x -= this.speed;
+    this.frameCounter++;
+    if (this.frameCounter >= this.frameDelay) {
+      this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+      this.frameCounter = 0;
+    }
+  }
+
+  draw() {
+    if (!this.isLoaded) return;
+
     ctx.drawImage(
-      clouds[this.cloudIndex],
+      this.spriteSheet,
+      this.currentFrame * this.frameWidth,
+      0,
+      this.frameWidth,
+      this.frameHeight,
       this.x,
       this.y,
-      this.width,
-      this.height
+      64,
+      64
     );
   }
 }
@@ -305,6 +372,49 @@ function updateScore() {
   ctx.fillText(score, canvas.width / 2, 69);
 }
 
+function drawBackgrounds() {
+  backgroundLayers.forEach((layer) => {
+    // Draw two copies of each layer for seamless scrolling
+    ctx.drawImage(layer.image, 0, layer.y, canvas.width, canvas.height);
+    ctx.drawImage(
+      layer.image,
+      0,
+      layer.y - canvas.height,
+      canvas.width,
+      canvas.height
+    );
+
+    // Move background when player moves up
+    if (froggy.y < canvas.height / 2) {
+      const diff = canvas.height / 2 - froggy.y;
+      layer.y += layer.speed * diff;
+    }
+
+    // Reset position when layer scrolls fully
+    if (layer.y > canvas.height) {
+      layer.y = 0;
+    }
+  });
+}
+
+let birds = [];
+
+function spawnBird() {
+  birds.push(new Bird());
+}
+
+(function loop() {
+  var rand = Math.round(Math.random() * (40000 - 10000)) + 10000;
+  setTimeout(function () {
+    spawnBird();
+    loop();
+  }, rand);
+})();
+
+setInterval(function () {
+  spawnBird();
+}, 15000);
+
 const FPS = 75;
 const FRAME_INTERVAL = 1000 / FPS;
 let lastFrameTime = 0;
@@ -316,13 +426,19 @@ function gameLoop(timestamp) {
     if (deltaTime >= FRAME_INTERVAL) {
       lastFrameTime = timestamp - (deltaTime % FRAME_INTERVAL);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+      drawBackgrounds();
 
       updatePlatforms();
       platforms.forEach((platform) => platform.draw());
 
       froggy.update();
       froggy.draw();
+
+      birds = birds.filter((bird) => bird.x > -bird.frameWidth);
+      birds.forEach((bird) => {
+        bird.update();
+        bird.draw();
+      });
     }
     updateScore();
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -331,11 +447,11 @@ function gameLoop(timestamp) {
 
 let onMainMenu;
 
-function mainMenu() {
+const mainMenuImage = new Image();
+mainMenuImage.onload = function () {
+  // Draw menu only after image loads
   onMainMenu = true;
-
-  ctx.fillStyle = "rgb(0, 85, 255)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(mainMenuImage, 0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
   ctx.font = "60px Arial";
   ctx.textAlign = "center";
@@ -345,13 +461,13 @@ function mainMenu() {
     canvas.width / 2,
     canvas.height / 2 + 60
   );
-}
+};
+mainMenuImage.onerror = function () {
+  console.error("Failed to load background image");
+};
+mainMenuImage.src = "background.png";
 
 const music = document.getElementById("music");
 music.volume = 0.09;
 music.loop = true;
 music.play();
-
-mainMenu();
-
-console.log("hi");
