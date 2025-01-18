@@ -170,14 +170,12 @@ window.addEventListener("keydown", (e) => {
     case " ":
       if (isGameOver) {
         isGameOver = false;
-        isPlaying = true;
         resetGame();
       }
       break;
     case "Enter":
       if (onMainMenu) {
         onMainMenu = false;
-        isPlaying = true;
         gameLoop();
       }
   }
@@ -206,7 +204,6 @@ let isGameOver = false;
 function checkLosingCondition() {
   if (doodler.y > canvas.height - 69) {
     isGameOver = true;
-    isPlaying = false;
     cancelAnimationFrame(animationFrameId);
     console.log("Player Lost");
 
@@ -242,25 +239,27 @@ function updateScore() {
   ctx.fillText(score, canvas.width / 2, 69);
 }
 
-const FPS = 90;
-let isPlaying = false;
+const FPS = 75;
+const FRAME_INTERVAL = 1000 / FPS;
+let lastFrameTime = 0;
 
-function gameLoop() {
-  if (!isGameOver && !onMainMenu && isPlaying) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+function gameLoop(timestamp) {
+  if (!isGameOver && !onMainMenu) {
+    const deltaTime = timestamp - lastFrameTime;
 
-    updatePlatforms();
-    platforms.forEach((platform) => platform.draw());
+    if (deltaTime >= FRAME_INTERVAL) {
+      lastFrameTime = timestamp - (deltaTime % FRAME_INTERVAL);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
-    doodler.update();
-    doodler.draw();
+      updatePlatforms();
+      platforms.forEach((platform) => platform.draw());
 
+      doodler.update();
+      doodler.draw();
+    }
     updateScore();
-
-    setTimeout(() => {
-      animationFrameId = requestAnimationFrame(gameLoop);
-    }, 1000 / FPS);
+    animationFrameId = requestAnimationFrame(gameLoop);
   }
 }
 
