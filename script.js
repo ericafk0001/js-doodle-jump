@@ -7,6 +7,11 @@ canvas.height = window.innerHeight;
 
 ctx.imageSmoothingEnabled = false;
 
+const jumpSound = document.getElementById("jumpSound");
+const startSound = document.getElementById("startSound");
+const restartSound = document.getElementById("restartSound");
+const gameOverSound = document.getElementById("gameOverSound");
+
 const backgroundImage = new Image();
 backgroundImage.src = "sky/1.png";
 
@@ -27,6 +32,12 @@ cloudPaths.forEach((path, index) => {
   clouds[index].src = path;
 });
 
+const froggyJump = new Image();
+froggyJump.src = "frog/jump.png";
+
+const froggyFall = new Image();
+froggyFall.src = "frog/fall.png";
+
 const PLATFORM_WIDTH = 140;
 const PLATFORM_HEIGHT = 76;
 const PLATFORM_GAP = 195;
@@ -44,10 +55,10 @@ const keys = {
   right: false,
 };
 
-class Doodler {
+class Froggy {
   constructor() {
-    this.width = 60;
-    this.height = 60;
+    this.width = 70;
+    this.height = 70;
     this.x = canvas.width / 2 - this.width / 2; // Center properly
     this.y = canvas.height / 2;
     this.velocity = 0;
@@ -58,18 +69,40 @@ class Doodler {
 
   jump() {
     if (!this.isJumping) {
+      jumpSound.volume = 0.5;
+      jumpSound.pause();
+      jumpSound.currentTime = 0;
+      jumpSound.play();
       this.velocity = this.jumpForce;
       this.isJumping = true;
     }
   }
 
   draw() {
-    ctx.fillStyle = "orange";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    ctx.save();
+
+    let imageToDraw;
+    if (this.isJumping) {
+      imageToDraw = froggyJump;
+    } else {
+      imageToDraw = froggyFall;
+    }
+
+    if (this.facingLeft) {
+      // Flip horizontally
+      ctx.translate(this.x + this.width, this.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(imageToDraw, 0, 0, this.width, this.height);
+    } else {
+      ctx.drawImage(imageToDraw, this.x, this.y, this.width, this.height);
+    }
+
+    ctx.restore();
   }
 
   checkPlatformCollision() {
     if (this.velocity > 0) {
+      this.isJumping = false;
       // Only check when falling
       for (const platform of platforms) {
         const isColliding =
@@ -91,9 +124,11 @@ class Doodler {
   update() {
     // Handle horizontal movement
     if (keys.left) {
+      this.facingLeft = true;
       this.x -= this.speed;
     }
     if (keys.right) {
+      this.facingLeft = false;
       this.x += this.speed;
     }
 
@@ -178,7 +213,7 @@ function updatePlatforms() {
   }
 }
 
-const doodler = new Doodler();
+const froggy = new Froggy();
 
 // Event listeners
 window.addEventListener("keydown", (e) => {
@@ -195,12 +230,14 @@ window.addEventListener("keydown", (e) => {
       break;
     case " ":
       if (isGameOver) {
+        restartSound.play();
         isGameOver = false;
         resetGame();
       }
       break;
     case "Enter":
       if (onMainMenu) {
+        startSound.play();
         onMainMenu = false;
         gameLoop();
       }
@@ -228,7 +265,7 @@ let animationFrameId;
 let isGameOver = false;
 
 function checkLosingCondition() {
-  if (doodler.y > canvas.height - 69) {
+  if (froggy.y > canvas.height - 69) {
     isGameOver = true;
     cancelAnimationFrame(animationFrameId);
     console.log("Player Lost");
@@ -250,10 +287,10 @@ function checkLosingCondition() {
 }
 
 function resetGame() {
-  doodler.x = canvas.width / 2 - doodler.width / 2;
-  doodler.y = canvas.height / 2;
-  doodler.velocity = 0;
-  doodler.jumpForce = INITIAL_JUMP_FORCE;
+  froggy.x = canvas.width / 2 - froggy.width / 2;
+  froggy.y = canvas.height / 2;
+  froggy.velocity = 0;
+  froggy.jumpForce = INITIAL_JUMP_FORCE;
 
   generatePlatforms();
   gameLoop();
@@ -281,8 +318,8 @@ function gameLoop(timestamp) {
       updatePlatforms();
       platforms.forEach((platform) => platform.draw());
 
-      doodler.update();
-      doodler.draw();
+      froggy.update();
+      froggy.draw();
     }
     updateScore();
     animationFrameId = requestAnimationFrame(gameLoop);
